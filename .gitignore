@@ -9,4 +9,7 @@
 .Rproj.user/354B9129/sources/s-C84959BE/lock_file
 .Rproj.user/shared/notebooks/patch-chunk-names
 .Rproj.user/*
+./data/
 *.Rproj
+*.zip
+

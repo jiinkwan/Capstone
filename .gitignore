@@ -14,3 +14,4 @@
 *.zip
 
 .Rproj.user
+*.csv

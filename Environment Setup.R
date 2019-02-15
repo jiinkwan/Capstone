@@ -1,7 +1,5 @@
 set.seed(43)
 
-library(LaF)
-
 destinyDirectory = "./data/"
 destinyFile = "Coursera_SwiftKey.zip"
 destiny = paste0(destinyDirectory, destinyFile)

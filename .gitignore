@@ -10,8 +10,17 @@
 .Rproj.user/shared/notebooks/patch-chunk-names
 .Rproj.user/*
 ./data/
+./data/sample/
 *.Rproj
 *.zip
 
 .Rproj.user
 *.csv
+*.pdf
+
+data/sample/en_US.newsSample.txt
+Appx/v25i05.R
+data/sample/en_US.twitterSample.txt
+data/sample/en_US.blogsSample.txt
+.RData
+*.RData

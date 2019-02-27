@@ -1,0 +1,228 @@
+---
+title: "Week2_Assignment"
+author: "Jinkwan Hong"
+date: "2019년 2월 21일"
+output: html_document
+---
+
+# Data Science Capstone
+**Jinkwan Hong**  
+*Saturday, Feb 30, 2019*
+
+## Milstone Report
+
+# Synopsis
+
+This report was prepared as a part of Data Scinece Capstone. The final goal is to create word prediction algorithm and the Shiny app that allows the public to use easily. 
+
+As for this documents, I am going to illustrate the data summaries to grasp the data profile. 
+
+[Data Source](https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip)
+
+# Getting and Cleaning the Data
+
+## Getting Data
+
+```{r warning=FALSE, message=FALSE}
+#library(testthat)
+#library(tokenizers)
+library(stopwords)
+library(sentimentr)
+library(dplyr)
+library(ggplot2)
+library(NLP)
+library(openNLP)
+library(RWeka)
+library(tm)
+
+set.seed(43)
+
+Sys.setlocale("LC_ALL", "American")
+destinyDirectory = "./data/"
+destinyFile = "Coursera_SwiftKey.zip"
+destiny = paste0(destinyDirectory, destinyFile)
+dataURL = "https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip"
+
+blogsFile <- unz(destiny, 'final/en_US/en_US.blogs.txt')
+blogs <- readLines(blogsFile, skipNul = TRUE)
+close(blogsFile)
+
+newsFile <- unz(destiny, 'final/en_US/en_US.news.txt')
+news <- readLines(newsFile, skipNul = TRUE)
+close(newsFile)
+
+twitterFile <- unz(destiny, 'final/en_US/en_US.twitter.txt')
+twitter <- readLines(twitterFile, skipNul = TRUE)
+close(twitterFile)
+
+profanityList <- lexicon::profanity_banned # Banned words
+```
+
+## Original Data Summary 
+
+```{r }
+#docsOrg <- Corpus(DirSource(unz(destiny, 'final/en_US/')), readerControl = list(readPlain,language="en_US", load = TRUE))
+#blogsOrg <- Corpus(VectorSource(blogs), readerControl = list(readPlain,language="en_US", load = TRUE))
+#newsOrg <- Corpus(VectorSource(news), readerControl = list(readPlain,language="en_US", load = TRUE))
+#twitterOrg <- Corpus(VectorSource(twitter), readerControl = list(readPlain,language="en_US", load = TRUE))
+docsOrg <- Corpus(VectorSource(c(blogs, news, twitter)), readerControl = list(readPlain,language="en_US", load = TRUE))
+#docsOrg <- Corpus(DirSource('./data/final/en_US'), readerControl = list(readPlain,language="en_US", load = TRUE))
+#tdmOrg <- TermDocumentMatrix(docsOrg)
+#dtmBlogs <- DocumentTermMatrix(blogsOrg)
+#dtmNews <- DocumentTermMatrix(newsOrg)
+#dtmTwitter <- DocumentTermMatrix(twitterOrg)
+dtmOrg <- DocumentTermMatrix(docsOrg)
+#length(docsOrg)
+#object.size(dtmOrg)
+
+```
+```{r echo = FALSE}
+# Helper funciton to count words. \\S+ = every word between space (single or multiple spaces)
+f.word.count <- function(my.list) {sum(stringr::str_count(my.list,"\\S+"))}
+
+# Data frame to store counts
+dfOrg <- data.frame(text.source = c("blogs", "twitter", "news"), line.count = NA, word.count = NA)
+
+# store the files into a list
+my.list <- list(blogs = blogs, twitter = twitter, news = news)
+
+# Counts lines and words
+
+dfOrg$line.count <- sapply(my.list, length)
+dfOrg$word.count <- sapply(my.list, f.word.count)
+
+g.line.count <- ggplot(dfOrg, aes(x = factor(text.source), y = line.count/1e+06))
+g.line.count <- g.line.count + geom_bar(stat = "identity") + 
+  labs(y = "# of lines/million", x = "text source", title = "Count of lines per Corpus")
+g.word.count <- ggplot(dfOrg, aes(x = factor(text.source), y = word.count/1e+06))
+g.word.count <- g.word.count + geom_bar(stat = "identity") + 
+  labs(y = "# of words/million", x = "text source", title = "Count of words per Corpus")
+```
+
+The summary plots says that there are 800,000 lines in blogs, 1 million lines in news, and 2 million lines in twitter. However number of words goes opposite way. Blogs 37 million, News 34 million, and Twitter 30 million words. It's probably because twitter limits the number of character on each twit by 140 bytes.
+
+The size of docsOrg corpus is 1.5 giga bytes which is quite big to work with. I am going to randomly sample then analyze. 
+
+## Sampling
+
+Here I am randomly sampling 1% of the data in order to perform explarotory analysis and turn samples into files to avoid unnecessary computing and drop the original data from the memory. Finally I am writing the text into files so I do not have to go through the same process all over again. 
+
+```{r }
+blogsSample <- blogs[rbinom(length(blogs)*.01, length(blogs), 0.5)]
+newsSample <- news[rbinom(length(news)*.01, length(news), 0.5)]
+twitterSample <- twitter[rbinom(length(twitter)*.01, length(twitter), 0.5)]
+
+rm(blogs) # Remove from memory to save the memory.
+rm(news)
+rm(twitter)
+rm(docsOrg)
+rm(dtmOrg)
+
+write.table(blogsSample, file = './data/sample/en_US.blogsSample.csv', row.names = FALSE, col.names = FALSE, sep = ",", quote = FALSE)
+write.table(newsSample, file = './data/sample/en_US.newsSample.csv', row.names = FALSE, col.names = FALSE, sep = ",", quote = FALSE)
+write.table(twitterSample, file = './data/sample/en_US.twitterSample.csv', row.names = FALSE, col.names = FALSE, sep = ",", quote = FALSE)
+write.table(profanityList, file = './data/profanityList.csv', row.names = FALSE, col.names = FALSE, sep = ",", quote = FALSE)
+```
+
+```{r echo = FALSE}
+# Data frame to store counts
+dfSample <- data.frame(text.source = c("blogs_Sample", "twitter_Sample", "news_Sample"), line.count = NA, word.count = NA)
+
+# store the files into a list
+my.list <- list(blogs_Sample = blogsSample, twitter_sample = twitterSample, news_Sample = newsSample)
+
+# Counts lines and words
+
+dfSample$line.count <- sapply(my.list, length)
+dfSample$word.count <- sapply(my.list, f.word.count)
+
+g.line.count <- ggplot(dfSample, aes(x = factor(text.source), y = line.count/1e+03))
+g.line.count <- g.line.count + geom_bar(stat = "identity") + 
+  labs(y = "# of lines/thousands", x = "text source", title = "Count of lines per Sample Corpus")
+g.word.count <- ggplot(dfSample, aes(x = factor(text.source), y = word.count/1e+03))
+g.word.count <- g.word.count + geom_bar(stat = "identity") + 
+  labs(y = "# of words/thousands", x = "text source", title = "Count of words per Sample Corpus")
+g.line.count
+g.word.count
+```
+
+```{r }
+# Making Corpus 
+#docsSamples <- Corpus(VectorSource(c(blogsSample, newsSample, twitterSample)), readerControl = list(readPlain,language="en_US", load = TRUE))
+docsSamples <- Corpus(DirSource('./data/sample'), readerControl = list(readPlain,language="en_US", load = TRUE))
+```
+
+## Cleaning Data
+There are lots of irregularity in the data since they are from different sources. Here I am removing the followings utilizing tm package.
+
+- Whitespace
+- Punctuation
+- Numbers
+- URL
+- Hashtags
+- Twitter Handles
+- HTML Tags
+- Stopwords (common grammartical word with little to no added meaning)
+
+
+```{r }
+
+removeURL <- function(x) gsub("http:[[:alnum:]]*", "", x)
+removeHashTags <- function(x) gsub("#\\S+", "", x)
+removeTwitterHandles <- function(x) gsub("@\\S+", "", x)
+removeHTMLTags <- function(x) gsub("<(/)?([a-zA-Z]*)(\\s[a-zA-Z]*=[^>]*)?(\\s)*(/)?>","",x)
+
+docsSamples <- tm_map(docsSamples, content_transformer(tolower))
+docsSamples <- tm_map(docsSamples, removeWords, stopwords("english"))
+docsSamples <- tm_map(docsSamples, removePunctuation)
+docsSamples <- tm_map(docsSamples, removeNumbers)
+docsSamples <- tm_map(docsSamples, stripWhitespace)
+#docsSamples <- tm_map(docsSamples, stemDocument)
+docsSamples <- tm_map(docsSamples, content_transformer(removeURL))
+docsSamples <- tm_map(docsSamples, content_transformer(removeHashTags))
+docsSamples <- tm_map(docsSamples, content_transformer(removeTwitterHandles))
+docsSamples <- tm_map(docsSamples, content_transformer(removeHTMLTags))
+dtmSamples <- DocumentTermMatrix(docsSamples)
+#rowSums(as.matrix(dtmSamples))
+tdmSamples <- TermDocumentMatrix(docsSamples, control = list(tokenize = RWeka::WordTokenizer))
+tdmMatrix <- as.matrix(tdmSamples)
+tdmMatrixSorted <- sort(rowSums(tdmMatrix), decreasing = TRUE)
+
+#tdmSamples <- TermDocumentMatrix(docsSamples, control = list(tokenize = NLP::wordpunct_tokenizer))
+```
+After sampling and cleanup word counts for the whole text went down to around 450,000 and the lines counts 
+
+## Analysis
+
+Corpus is now ready for analysis. 
+
+```{r }
+sum(tdmMatrix)
+length(tdmMatrix[,1])
+freqWords <- findFreqTerms(tdmSamples, 2)
+length(freqWords)
+```
+There are total of 539,823 words in the corpus and 23,261 are distinctive. 20,523 of them are used more than 2 times.
+
+### Top Frequent Words
+
+```{r}
+n <- 25L # variable to set top n words
+dfTop <- data.frame(words = names(tdmMatrixSorted[1:n]), frequency = tdmMatrixSorted[1:n])
+dfTop$words <- reorder(dfTop$words, dfTop$frequency)
+g.top <- ggplot(dfTop, aes(x = words, y = frequency))
+g.top <- g.top + geom_bar(stat = "identity") + coord_flip() + labs(title = "Most Frequent")
+g.top
+
+```
+
+### NGram Tokenize
+
+```{r }
+BigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 2, max = 2))
+TrigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 3, max = 3))
+
+dtmSamplesBigram <- DocumentTermMatrix(dtmSamples, control = list(tokenize = BigramTokenizer))
+dtmSamplesTrigram <- DocumentTermMatrix(dtmSamples, control = list(tokenize = TrigramTokenizer))
+```
+

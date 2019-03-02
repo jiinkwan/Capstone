@@ -135,3 +135,10 @@ inspect(removeSparseTerms(dtm, 0.4))
 # Dictionary
 
 inspect(DocumentTermMatrix(reuters, list(dictionary = c("price", "curde", "oil"))))
+
+# Tokenize and NGram
+BigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 2, max = 2)) #RWeka
+TrigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 3, max = 3)) #RWeka
+reutersSin <- DocumentTermMatrix(reuters, control = list(tokenize = RWeka::WordTokenizer))
+reutersBi <- DocumentTermMatrix(reuters, control = list(tokenize = BigramTokenizer))
+reutersTri <- DocumentTermMatrix(reuters, control = list(tokenize = TrigramTokenizer))

@@ -219,10 +219,12 @@ g.top
 ### NGram Tokenize
 
 ```{r }
-BigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 2, max = 2))
-TrigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 3, max = 3))
-
-dtmSamplesBigram <- DocumentTermMatrix(dtmSamples, control = list(tokenize = BigramTokenizer))
-dtmSamplesTrigram <- DocumentTermMatrix(dtmSamples, control = list(tokenize = TrigramTokenizer))
+#BigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 2, max = 2)) #RWeka
+#TrigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 3, max = 3)) #RWeka
+BigramTokenizer <- function(x) unlist(lapply(ngrams(words(x), 2), paste, collapse = " "), use.names = TRUE) # OpenNLP
+TrigramTokenizer <- function(x) unlist(lapply(ngrams(words(x), 3), paste, collapse = " "), use.names = FALSE) # OpenNLP
+dtmSamplesSingle <- DocumentTermMatrix(docsSamples[], control = list(tokenize = RWeka::WordTokenizer))
+dtmSamplesBigram <- DocumentTermMatrix(docsSamples, control = list(tokenize = BigramTokenizer))
+dtmSamplesTrigram <- DocumentTermMatrix(docsSamples, control = list(tokenize = TrigramTokenizer))
 ```
 

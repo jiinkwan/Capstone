@@ -156,10 +156,8 @@ g.word.count
 ```{r }
 # Making Corpus 
 #docsSamples <- Corpus(VectorSource(c(blogsSample, newsSample, twitterSample)), readerControl = list(readPlain,language="en_US", load = TRUE))
-<<<<<<< HEAD
+
 docsSamples <- VCorpus(DirSource('./data/sample'), readerControl = list(readPlain,language="en_US", load = TRUE))
-=======
->>>>>>> dfdb91528abec1d33056af56c7cdb80701e3750f
 ```
 
 ## Cleaning Data
@@ -250,8 +248,6 @@ tdmSamplesTrigramMatrix <- as.matrix(tdmSamplesTrigram)
 tdmSamplesTrigramMatrixSorted <- sort(rowSums(tdmSamplesTrigramMatrix), decreasing = TRUE)
 ```
 
-<<<<<<< HEAD
-
 ```{r}
 n <- 25L # variable to set top n words
 dfBigramTop <- data.frame(words = names(tdmSamplesBigramMatrixSorted[1:n]), frequency = tdmSamplesBigramMatrixSorted[1:n])
@@ -265,7 +261,6 @@ dftdmTrigram$words <- reorder(dftdmTrigram$words, dftdmTrigram$frequency)
 g.TrigramTop <- ggplot(dftdmTrigram, aes(x = words, y = frequency))
 g.TrigramTop <- g.TrigramTop + geom_bar(stat = "identity") + coord_flip() + labs(title = "Trigram Most Frequent")
 g.TrigramTop
->>>>>>> dfdb91528abec1d33056af56c7cdb80701e3750f
 ```
 
 

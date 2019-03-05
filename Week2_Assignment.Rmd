@@ -34,7 +34,7 @@ library(NLP)
 library(openNLP)
 library(RWeka)
 library(tm)
-
+library(tidytext)
 set.seed(43)
 
 Sys.setlocale("LC_ALL", "American")
@@ -125,6 +125,8 @@ write.table(blogsSample, file = './data/sample/en_US.blogsSample.csv', row.names
 write.table(newsSample, file = './data/sample/en_US.newsSample.csv', row.names = FALSE, col.names = FALSE, sep = ",", quote = FALSE)
 write.table(twitterSample, file = './data/sample/en_US.twitterSample.csv', row.names = FALSE, col.names = FALSE, sep = ",", quote = FALSE)
 write.table(profanityList, file = './data/profanityList.csv', row.names = FALSE, col.names = FALSE, sep = ",", quote = FALSE)
+
+docsSamples <- VCorpus(VectorSource(c(blogsSample, newsSample, twitterSample)), readerControl = list(readPlain,language="en_US", load = TRUE))
 ```
 
 After sampling and cleanup word counts for the whole text went down to around 450,000 and the lines counts 
@@ -154,7 +156,10 @@ g.word.count
 ```{r }
 # Making Corpus 
 #docsSamples <- Corpus(VectorSource(c(blogsSample, newsSample, twitterSample)), readerControl = list(readPlain,language="en_US", load = TRUE))
+<<<<<<< HEAD
 docsSamples <- VCorpus(DirSource('./data/sample'), readerControl = list(readPlain,language="en_US", load = TRUE))
+=======
+>>>>>>> dfdb91528abec1d33056af56c7cdb80701e3750f
 ```
 
 ## Cleaning Data
@@ -190,6 +195,7 @@ docsSamples <- tm_map(docsSamples, content_transformer(removeHTMLTags))
 dtmSamples <- DocumentTermMatrix(docsSamples)
 #rowSums(as.matrix(dtmSamples))
 tdmSamples <- TermDocumentMatrix(docsSamples, control = list(tokenize = RWeka::WordTokenizer))
+tdmSamples <- TermDocumentMatrix(docsSamples)
 tdmMatrix <- as.matrix(tdmSamples)
 tdmMatrixSorted <- sort(rowSums(tdmMatrix), decreasing = TRUE)
 
@@ -219,6 +225,9 @@ g.top <- ggplot(dfTop, aes(x = words, y = frequency))
 g.top <- g.top + geom_bar(stat = "identity") + coord_flip() + labs(title = "Most Frequent")
 g.top
 
+#rm(dfOrg)
+#rm(dfSample)
+#rm(dfTop)
 ```
 
 ### NGram Tokenize
@@ -241,6 +250,7 @@ tdmSamplesTrigramMatrix <- as.matrix(tdmSamplesTrigram)
 tdmSamplesTrigramMatrixSorted <- sort(rowSums(tdmSamplesTrigramMatrix), decreasing = TRUE)
 ```
 
+<<<<<<< HEAD
 
 ```{r}
 n <- 25L # variable to set top n words
@@ -255,6 +265,7 @@ dftdmTrigram$words <- reorder(dftdmTrigram$words, dftdmTrigram$frequency)
 g.TrigramTop <- ggplot(dftdmTrigram, aes(x = words, y = frequency))
 g.TrigramTop <- g.TrigramTop + geom_bar(stat = "identity") + coord_flip() + labs(title = "Trigram Most Frequent")
 g.TrigramTop
+>>>>>>> dfdb91528abec1d33056af56c7cdb80701e3750f
 ```
 
 

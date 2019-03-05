@@ -97,6 +97,9 @@ g.line.count <- g.line.count + geom_bar(stat = "identity") +
 g.word.count <- ggplot(dfOrg, aes(x = factor(text.source), y = word.count/1e+06))
 g.word.count <- g.word.count + geom_bar(stat = "identity") + 
   labs(y = "# of words/million", x = "text source", title = "Count of words per Corpus")
+par(mfrow = c(1,2))
+g.line.count
+g.word.count
 ```
 
 The summary plots says that there are 800,000 lines in blogs, 1 million lines in news, and 2 million lines in twitter. However number of words goes opposite way. Blogs 37 million, News 34 million, and Twitter 30 million words. It's probably because twitter limits the number of character on each twit by 140 bytes.
@@ -124,6 +127,8 @@ write.table(twitterSample, file = './data/sample/en_US.twitterSample.csv', row.n
 write.table(profanityList, file = './data/profanityList.csv', row.names = FALSE, col.names = FALSE, sep = ",", quote = FALSE)
 ```
 
+After sampling and cleanup word counts for the whole text went down to around 450,000 and the lines counts 
+
 ```{r echo = FALSE}
 # Data frame to store counts
 dfSample <- data.frame(text.source = c("blogs_Sample", "twitter_Sample", "news_Sample"), line.count = NA, word.count = NA)
@@ -149,7 +154,7 @@ g.word.count
 ```{r }
 # Making Corpus 
 #docsSamples <- Corpus(VectorSource(c(blogsSample, newsSample, twitterSample)), readerControl = list(readPlain,language="en_US", load = TRUE))
-docsSamples <- Corpus(DirSource('./data/sample'), readerControl = list(readPlain,language="en_US", load = TRUE))
+docsSamples <- VCorpus(DirSource('./data/sample'), readerControl = list(readPlain,language="en_US", load = TRUE))
 ```
 
 ## Cleaning Data
@@ -190,7 +195,7 @@ tdmMatrixSorted <- sort(rowSums(tdmMatrix), decreasing = TRUE)
 
 #tdmSamples <- TermDocumentMatrix(docsSamples, control = list(tokenize = NLP::wordpunct_tokenizer))
 ```
-After sampling and cleanup word counts for the whole text went down to around 450,000 and the lines counts 
+
 
 ## Analysis
 
@@ -202,7 +207,7 @@ length(tdmMatrix[,1])
 freqWords <- findFreqTerms(tdmSamples, 2)
 length(freqWords)
 ```
-There are total of 539,823 words in the corpus and 23,261 are distinctive. 20,523 of them are used more than 2 times.
+There are total of 540,627 words in the corpus and 23,419 are distinctive. 20,547 of them are used more than 2 times.
 
 ### Top Frequent Words
 
@@ -218,13 +223,41 @@ g.top
 
 ### NGram Tokenize
 
+I reduced the sparse terms to reduce computation. 
+
 ```{r }
 #BigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 2, max = 2)) #RWeka
 #TrigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 3, max = 3)) #RWeka
 BigramTokenizer <- function(x) unlist(lapply(ngrams(words(x), 2), paste, collapse = " "), use.names = TRUE) # OpenNLP
 TrigramTokenizer <- function(x) unlist(lapply(ngrams(words(x), 3), paste, collapse = " "), use.names = FALSE) # OpenNLP
-dtmSamplesSingle <- DocumentTermMatrix(docsSamples[], control = list(tokenize = RWeka::WordTokenizer))
-dtmSamplesBigram <- DocumentTermMatrix(docsSamples, control = list(tokenize = BigramTokenizer))
-dtmSamplesTrigram <- DocumentTermMatrix(docsSamples, control = list(tokenize = TrigramTokenizer))
+#tdmSamplesSingle <- TermDocumentMatrix(docsSamples[], control = list(tokenize = RWeka::WordTokenizer))
+tdmSamplesBigram <- TermDocumentMatrix(docsSamples, control = list(tokenize = BigramTokenizer))
+tdmSamplesBigram <- removeSparseTerms(tdmSamplesBigram, .99)
+tdmSamplesBigramMatrix <- as.matrix(tdmSamplesBigram)
+tdmSamplesBigramMatrixSorted <- sort(rowSums(tdmSamplesBigramMatrix), decreasing = TRUE)
+tdmSamplesTrigram <- TermDocumentMatrix(docsSamples, control = list(tokenize = TrigramTokenizer))
+tdmSamplesTrigram <- removeSparseTerms(tdmSamplesTrigram, .99)
+tdmSamplesTrigramMatrix <- as.matrix(tdmSamplesTrigram)
+tdmSamplesTrigramMatrixSorted <- sort(rowSums(tdmSamplesTrigramMatrix), decreasing = TRUE)
 ```
+
+
+```{r}
+n <- 25L # variable to set top n words
+dfBigramTop <- data.frame(words = names(tdmSamplesBigramMatrixSorted[1:n]), frequency = tdmSamplesBigramMatrixSorted[1:n])
+dfBigramTop$words <- reorder(dfBigramTop$words, dfBigramTop$frequency)
+g.BigramTop <- ggplot(dfBigramTop, aes(x = words, y = frequency))
+g.BigramTop <- g.BigramTop + geom_bar(stat = "identity") + coord_flip() + labs(title = "Bigram Most Frequent")
+g.BigramTop
+
+dftdmTrigram <- data.frame(words = names(tdmSamplesTrigramMatrixSorted[1:n]), frequency = tdmSamplesTrigramMatrixSorted[1:n])
+dftdmTrigram$words <- reorder(dftdmTrigram$words, dftdmTrigram$frequency)
+g.TrigramTop <- ggplot(dftdmTrigram, aes(x = words, y = frequency))
+g.TrigramTop <- g.TrigramTop + geom_bar(stat = "identity") + coord_flip() + labs(title = "Trigram Most Frequent")
+g.TrigramTop
+```
+
+
+
+
 

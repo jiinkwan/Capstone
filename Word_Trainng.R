@@ -63,13 +63,19 @@ QuadgramTokenizer <- function(x) unlist(lapply(ngrams(words(x), 4), paste, colla
 PentgramTokenizer <- function(x) unlist(lapply(ngrams(words(x), 5), paste, collapse = " "), use.names = FALSE) # OpenNLP
 HexgramTokenizer <- function(x) unlist(lapply(ngrams(words(x), 6), paste, collapse = " "), use.names = FALSE) # OpenNLP
 
+#BigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 2, max = 2)) #RWeka
+#TrigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 3, max = 3)) #RWeka
+#QuadgramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 4, max = 4)) #RWeka
+#PentgramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 5, max = 5)) #RWeka
+#HexgramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 6, max = 6)) #RWeka
+
 tdmBigram <- TermDocumentMatrix(docs, control = list(tokenize = BigramTokenizer))
 inspect(tdmBigram)
 tdmTrigram <- TermDocumentMatrix(docs, control = list(tokenize = TrigramTokenizer))
 inspect(tdmTrigram)
-tdmQuadgram <- TermDocumentMatrix(docs, control = list(tokenize = QuadgramTokenizer))
-inspect(tdmQuadgram)
-tdmPentgram <- TermDocumentMatrix(docs, control = list(tokenize = PentgramTokenizer))
-inspect(tdmPentgram)
-tdmHexgram <- TermDocumentMatrix(docs, control = list(tokenize = HexgramTokenizer))
-inspect(tdmHexgram)
+#tdmQuadgram <- TermDocumentMatrix(docs, control = list(tokenize = QuadgramTokenizer))
+#inspect(tdmQuadgram)
+#tdmPentgram <- TermDocumentMatrix(docs, control = list(tokenize = PentgramTokenizer))
+#inspect(tdmPentgram)
+#tdmHexgram <- TermDocumentMatrix(docs, control = list(tokenize = HexgramTokenizer))
+#inspect(tdmHexgram)

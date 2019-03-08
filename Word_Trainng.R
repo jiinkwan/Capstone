@@ -55,7 +55,9 @@ tdmMatrixSorted <- sort(rowSums(tdmMatrix), decreasing = TRUE)
 #tdm <- TermDocumentMatrix(docsSamples)
 #tdm <- as.matrix(tdmSamples)
 #tdmMatrixSorted <- sort(rowSums(tdmMatrix), decreasing = TRUE)
-
+rm(blogs)
+rm(news)
+rm(twitter)
 
 BigramTokenizer <- function(x) unlist(lapply(ngrams(words(x), 2), paste, collapse = " "), use.names = FALSE) # OpenNLP
 TrigramTokenizer <- function(x) unlist(lapply(ngrams(words(x), 3), paste, collapse = " "), use.names = FALSE) # OpenNLP
